@@ -94,54 +94,6 @@ def update_place(place_id, request):
     return jsonify(get_place.to_dict())
 
 
-def search(request):
-    """
-    retrieves all Place objects depending of the JSON
-    in the body of the request
-    """
-    body_request = request.get_json()
-    if body_request is None:
-        abort(400, 'Not a JSON')
-    places_list = []
-    places_amenity_list = []
-    place_amenities = []
-    all_cities = []
-    states = body_request.get('states')
-    cities = body_request.get('cities')
-    amenities = body_request.get('amenities')
-    if len(body_request) == 0 or (states is None and cities is None):
-        places = storage.all(Place)
-        for p in places.values():
-            places_list.append(p.to_dict())
-    if states is not None and len(states) is not 0:
-        for id in states:
-            get_cities = get_all(id, None).json
-            for city in get_cities:
-                all_cities.append(city.get('id'))
-        for id in all_cities:
-            places = do_get_places(id, None)
-            for p in places.json:
-                places_list.append(p)
-    if cities is not None and len(cities) is not 0:
-        for id in cities:
-            places = do_get_places(id, None)
-            for p in places.json:
-                places_list.append(p)
-    if amenities is not None and len(amenities) is not 0:
-        for p in places_list:
-            place_id = p.get('id')
-            get_amenities = storage.get(Place, place_id)
-            amenity_id = get_amenities.amenities
-            for a in amenity_id:
-                place_amenities.append(a.id)
-                if (a.id in amenities):
-                    places_amenity_list.append(p)
-            place_amenities = []
-        return jsonify(places_amenity_list)
-
-    return jsonify(places_list)
-
-
 @app_views.route('/cities/<city_id>/places/', methods=['GET', 'POST'],
                  defaults={'place_id': None}, strict_slashes=False)
 @app_views.route('/places/<place_id>', defaults={'city_id': None},
